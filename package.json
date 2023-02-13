@@ -1,0 +1,19 @@
+{
+  "name": "hgs",
+  "version": "1.0.0",
+  "description": "heat-generator-service",
+  "main": "hgs.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cybera/heat-generator-service.git"
+  },
+  "author": "scotth",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cybera/heat-generator-service/issues"
+  },
+  "homepage": "https://github.com/cybera/heat-generator-service#readme"
+}
