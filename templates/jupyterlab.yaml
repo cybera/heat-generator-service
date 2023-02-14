@@ -12,6 +12,11 @@ parameters:
   name:
     type: string
 
+ email:
+    type: string
+    label: Administrator email
+    description: Enter an email for ssl cert alerts.
+
   flavor:
     type: string
     label: Flavor
@@ -19,14 +24,17 @@ parameters:
     default: m1.small
     constraints:
       - custom_constraint: nova.flavor
+
   volume-size:
     type: string
     description: Volume size of the system volume of the Virtual Server
     default: 50
+
   image-name:
     type: string
     description: The name of the RAC image to use for the instance
     default: "Ubuntu 20.04"
+
   repo:
     type: string
     description: The URL of the github repo to clone after setup
