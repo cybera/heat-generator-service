@@ -46,7 +46,7 @@ resources:
     properties:
       name: "data"
       size: { get_param: volume_size }
-      volume_type: "M1"
+      volume_type: "encrypted"
 
   security_group:
     type: OS::Neutron::SecurityGroup
@@ -138,30 +138,32 @@ resources:
                   fi
                   mkdir /data/notebooks
                   add-apt-repository ppa:certbot/certbot -y
-                  apt-get update
-                  apt-get install -y software-properties-common
-                  apt-get install -y certbot python3.8 python3-pip 
+                  apt-get -qq update
+                  apt-get -qq install -y software-properties-common certbot python3.8 python3-pip
                   certbot certonly --standalone -n -m %EMAIL% --agree-tos -d $dns_name
                   pip3 install jupyterlab
+                  git clone %REPO% && cd "$(basename "%REPO%" .git)"
+                  pip3 install -q -r requirements.txt
 
                 path: /tmp/bootstrap.sh
                 permissions: '0700'
             runcmd:
               - /tmp/bootstrap.sh > /var/log/bootstrap.log 2>&1
         params:
+            "%REPO%": { get_param: repo }
             "%VOLUME_ID%": { get_param: data_volume }
             "%EMAIL%": { get_param: email }
 
 outputs:
   instance_detail:
-    description: 
+    description: Details of your instance
     value: { get_attr: [instance, show] }
 
-  SERVER_01_NETWORK:
-    description: 
+  instance_network:
+    description: Network Details
     value: { get_attr: [instance, networks] }
 
-  SERVER_01_IP:
-    description: 
+  instance__IP:
+    description: IP Address
     value: { get_attr: [instance, addresses,{ get_param: default }, 0, port] }
             
