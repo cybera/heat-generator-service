@@ -15,9 +15,13 @@
 
     <!--------------------------------------js Functions-------------------------------------->
     <script type="text/javascript" language="javascript">
-
-
     </script>
+
+    <link rel="preload" href="/style/index.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="/style/index.css">
+    </noscript>
+
 
     <style>
         body {
@@ -37,7 +41,7 @@
         .h3,
         .h4 {
             font-family: 'Titillium Web;
-            line-height: 1.5em;
+ line-height: 1.5em;
         }
 
         a,
@@ -125,6 +129,8 @@
             font-family: 'Titillium Web';
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web" rel="stylesheet">
+
 
 </head>
 
@@ -133,9 +139,14 @@
         style="box-shadow: rgba(17, 18, 38, 0.15) 0px 0px 0px; transition: opacity 200ms ease 0.3s, box-shadow 200ms ease 0.3s; height: 55px; z-index: 1000;">
 
         <nav id="navbarNav" class="col-md-10 offset-md-1 navbar navbar-expand-md navbar-light pop-bar">
-            <span><a class="navbar-brand" href="/"><svg class="icon">
-                        <!-- <use href="#-icon"></use> -->
-                    </svg><b>Heat Generator Service</b></a></span>
+            <span>
+                <a class="navbar-brand" href="/">
+                    <!-- <svg class="icon">
+                    <use href="#-icon"></use>
+                </svg> -->
+                    <b>Heat Generator Service</b>
+                </a>
+            </span>
             <button class="fancy-toggler navbar-toggler" type="button" data-toggle="collapse"
                 data-target="#navbarNav-collapsibleNavbar"
                 style="cursor: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAAXNSR0IArs4c6QAAANpJREFUKFOF0DErhgEUxfHfYXiRQbGRWBRGH8JiMllltMhgs8jgGxBfQPkEFoOyGCyUspneUkgGpFw9et56N3e5p3v/3c490VZVrWIXx0kOe/NeTx/4hj3sYyzJVz/cD34kGa6qVywk6f4HvmAETzjHSZLrVNUMNrCTpFNVB7jDItYbG1huwHfcYynJYFV18JPku6qGcIbbBvzEHLaSbFfVOAbwjEaf4qIBj7CSZKoxX1WT7cVuq6+w+fd1VT3gJslaVTXXJPlpd01Moz1wAo+4bHsvmWnMJ5n9BcF2YYxpXBFiAAAAAElFTkSuQmCC&quot;) 0 0, auto;">
@@ -145,18 +156,40 @@
                 <ul class="navbar-nav ml-auto">
                     <li id="media-link" class="nav-item">
                         <a href="/link">
-                            <i class="material-icons"></i>Media
+                            <i class="material-icons"></i>menu1
                         </a>
                     </li>
 
-                    
+
 
                     <!-- %insertPopNavItem% -->
                 </ul>
             </div>
         </nav>
     </div>
-
-    Hello World
-
+    <form class="inputForm">
+        <h4>Stack Parameters:</h4>
+        <div class="fieldset">
+            <label class="fieldLabel">Name (name)</label>
+            <input type="text" id="name" />
+        </div>
+        <div class="fieldset">
+            <label class="fieldLabel">GitHub Repo to clone (repo)</label>
+            <input type="text" id="repo" />
+        </div>
+        <div class="fieldset">
+            <label class="fieldLabel">Size of volume (volume-size)</label>
+            <input type="number" id="volume-size" value="50">
+        </div>
+        <div class="fieldset">
+            <label class="fieldLabel">Image Name (image-name)</label>
+            <select name="image-name" id="image-name">
+                <option value="">Please choose an image</option>
+            </select>
+        </div>
+        <div class="fieldset">
+            <label class="fieldLabel">Instance Name (instance-name)</label>
+            <input type="text" id="instance-name" />
+        </div>
+    </form>
 </body>
