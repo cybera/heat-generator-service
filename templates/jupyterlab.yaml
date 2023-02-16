@@ -1,7 +1,7 @@
 description: Template to install JupyterLab
 # ocata version, 2023-02-14
 # pike version, 2023-02-14
-heat_template_version: 2023-02-14
+heat_template_version: 2017-09-01
 
 # input parameters that have to be provided when instantiating template
 # optional and can be omitted when no input is required
@@ -9,10 +9,8 @@ heat_template_version: 2023-02-14
 # or binding to environment-specifics like certain images
 # https://docs.openstack.org/heat/pike/template_guide/hot_spec.html#parameters-section
 parameters:
-  name:
-    type: string
 
- email:
+  email:
     type: string
     label: Administrator email
     description: Enter an email for ssl cert alerts.
@@ -39,13 +37,19 @@ parameters:
     type: string
     description: The URL of the github repo to clone after setup
 
+  key-name:
+    type: string
+    label: Key name
+    description: Name of the key-pair to be used to access the instance via SSH
+    constraints:
+      - custom_constraint: nova.keypair
 
 resources:
   data_volume:
     type: OS::Cinder::Volume
     properties:
       name: "data"
-      size: { get_param: volume_size }
+      size: { get_param: volume-size }
       volume_type: "encrypted"
 
   security_group:
@@ -102,68 +106,54 @@ resources:
     type: OS::Nova::Server
     properties:
       flavor: { get_param: flavor }
-      key_name: { get_param: key_name }
+      key_name: { get_param: key-name }
       image: "Ubuntu 20.04"
       security_groups:
         - { get_resource: security_group }
       networks:
         - network: default
-      user_data_format: RAW
+      # user_data_format: RAW
       user_data:
         str_replace:
           template: |
-            #cloud-config
-            write_files:
-              - content: |
-                  #!/bin/bash -v
-                  sleep 120
-                  if [[ -f /usr/local/bin/enableAutoUpdate ]]; then
-                  /usr/local/bin/enableAutoUpdate
-                  fi
-                  mkdir /data
-                  vol_id="%VOLUME_ID%"
-                  vol="/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_$(echo ${vol_id} | cut -c -20)"
-                  ip6=$(ip -6 addr show ens3 | awk '/2605/ { print $2 }' | awk 'BEGIN { FS="/"; } { print $1 }')
-                  dns_name=$(dig +short -x $ip6 @ns-yyc.cloud.cybera.ca)
-                  dns_name=${dns_name::-1}
-                  if [[ -e "${vol}" ]]; then
-                    fs=$(blkid -o value -s TYPE $vol)
-                    if [[ $fs != "ext4" ]]; then
-                      mkfs -t ext4 $vol
-                    fi
-                    mount $vol /data
-                    dev_path=$(readlink -f $vol)
-                    uuid=$(lsblk -no uuid $dev_path)
-                    echo "UUID=${uuid} /data ext4 defaults 0 1 " | tee --append  /etc/fstab
-                  fi
-                  mkdir /data/notebooks
-                  add-apt-repository ppa:certbot/certbot -y
-                  apt-get -qq update
-                  apt-get -qq install -y software-properties-common certbot python3.8 python3-pip
-                  certbot certonly --standalone -n -m %EMAIL% --agree-tos -d $dns_name
-                  pip3 install jupyterlab
-                  git clone %REPO% && cd "$(basename "%REPO%" .git)"
-                  pip3 install -q -r requirements.txt
-
-                path: /tmp/bootstrap.sh
-                permissions: '0700'
-            runcmd:
-              - /tmp/bootstrap.sh > /var/log/bootstrap.log 2>&1
+            if [[ -f /usr/local/bin/enableAutoUpdate ]]; then
+              /usr/local/bin/enableAutoUpdate
+            fi
+            mkdir /data
+            vol_id="%VOLUME_ID%"
+            vol="/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_$(echo ${vol_id} | cut -c -20)"
+            ip6=$(ip -6 addr show ens3 | awk '/2605/ { print $2 }' | awk 'BEGIN { FS="/"; } { print $1 }')
+            dns_name=$(dig +short -x $ip6 @ns-yyc.cloud.cybera.ca)
+            dns_name=${dns_name::-1}
+            if [[ -e "${vol}" ]]; then
+              fs=$(blkid -o value -s TYPE $vol)
+              if [[ $fs != "ext4" ]]; then
+                mkfs -t ext4 $vol
+              fi
+              mount $vol /data
+              dev_path=$(readlink -f $vol)
+              uuid=$(lsblk -no uuid $dev_path)
+              echo "UUID=${uuid} /data ext4 defaults 0 1 " | tee --append  /etc/fstab
+            fi
+            mkdir /data/notebooks
+            add-apt-repository ppa:certbot/certbot -y
+            apt-get -qq update
+            apt-get -qq install -y software-properties-common certbot python3.8 python3-pip
+            certbot certonly --standalone -n -m %EMAIL% --agree-tos -d $dns_name
+            pip3 install jupyterlab
+            git clone %REPO% && cd "$(basename "%REPO%" .git)"
+            pip3 install -q -r requirements.txt
         params:
-            "%REPO%": { get_param: repo }
-            "%VOLUME_ID%": { get_param: data_volume }
+            "%VOLUME_ID%": { get_resource: data_volume }
             "%EMAIL%": { get_param: email }
+            "%REPO%": { get_param: repo }
 
 outputs:
   instance_detail:
-    description: Details of your instance
+    description: 
     value: { get_attr: [instance, show] }
 
-  instance_network:
-    description: Network Details
+  SERVER_01_NETWORK:
+    description: 
     value: { get_attr: [instance, networks] }
 
-  instance__IP:
-    description: IP Address
-    value: { get_attr: [instance, addresses,{ get_param: default }, 0, port] }
-            
