@@ -107,7 +107,7 @@ resources:
         pip3 install -q -r requirements.txt
         cd ..
         wall "Setting up JupyterLab"
-        hashed=$(python3 -c "from notebook.auth import passwd; import random; import string; output = ''.join(random.choice(string.ascii_letters) for i in range(24)); f = open(\"jupyterpass.txt\", \"a\"); f.write(str(output)); f.close(); print(passwd(str(output)))")
+        hashed=$(python3 -c "from notebook.auth import passwd; import random; import string; output = ''.join(random.choice(string.ascii_letters) for i in range(24)); f = open(\"jupyterpass.txt\", \"a\"); f.write(str(output + \"\n\")); f.close(); print(passwd(str(output)))")
         tee -a /etc/systemd/system/jupyter.service <<EOF
         [Unit]
         Description=Jupyter Notebook
