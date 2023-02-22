@@ -15,6 +15,119 @@
 
     <!--------------------------------------js Functions-------------------------------------->
     <script type="text/javascript" language="javascript">
+
+        var templatesObjArr = [];
+        var selectedTemplateObj = {};
+        var images = [];
+        images.push({ "d40fd617-b2ab-4cfc-950e-49a2e54c19f0": "Ubuntu 18.04" })
+        images.push({ "ebcafd0b-9698-4adc-9e75-16e4e03082e2": "Ubuntu 20.04" })
+
+        var flavors = [];
+        flavors.push({ "771cd84b-47ea-45e8-b76c-0b6a1080d11c": "m1.micro" })
+        flavors.push({ "1": "m1.tiny" })
+        flavors.push({ "2": "m1.small" })
+        flavors.push({ "3": "m1.medium" })
+        flavors.push({ "dc4362ca-12ff-4224-91fe-f3542e05718f": "m1.large" })
+        flavors.push({ "b8218927-f9e6-43c0-abd2-d8f9fc322a0e": "m1.xlarge" })
+
+        $(document).ready(function () {
+
+            function getTemplates() {
+                $.get('/getTemplates', function (data) {
+                    templatesObjArr = JSON.parse(data);
+                    selectedTemplateObj = templatesObjArr[0]
+
+                    for (const temp of templatesObjArr) {
+                        var fileName = temp.template
+
+                        $('#templateSelect')
+                            .append($("<option></option>")
+                                .attr("value", fileName)
+                                .text(fileName.replace(".yaml", "")));
+                    }
+                })
+            }
+            getTemplates();
+
+            function getImages() {
+                for (const temp of images) {
+                    var key = Object.keys(temp)
+                    var val = Object.values(temp)
+
+                    $('#image-name')
+                        .append($("<option></option>")
+                            .attr("value", key)
+                            .text(val));
+                }
+
+            }
+            getImages();
+
+            function getFlavors() {
+                for (const temp of flavors) {
+                    // var key = Object.keys(temp)
+                    var val = Object.values(temp)
+
+                    $('#flavor')
+                        .append($("<option></option>")
+                            .attr("value", val)
+                            .text(val));
+                }
+
+            }
+            getFlavors();
+
+            function setDownloadVisable(){
+                if($("#volume-size").val() == "" ||
+                    $("#flavor").val() == "" ||
+                    $("#image-name").val() == "" ||
+                    $("#repo").val() == ""){
+                        $("#download").hide()
+                    }else{
+                        $("#download").show()
+                    }
+            }
+            $('.inputs').change(function() 
+            {
+                setDownloadVisable()
+            });
+            $('.inputs').keyup(function() 
+            {
+                setDownloadVisable()
+            });
+            $("#download").hide()
+
+        })
+
+        function downloadTemplate() {
+
+            var selectedTemplateText = selectedTemplateObj.templateContents
+
+            selectedTemplateText = selectedTemplateText.replaceAll('<SIZE>',    $("#volume-size").val())
+            selectedTemplateText = selectedTemplateText.replaceAll('<FLAVOR>',  $("#flavor").val())
+            selectedTemplateText = selectedTemplateText.replaceAll('<IMAGE>',   $("#image-name").val())
+            selectedTemplateText = selectedTemplateText.replaceAll('<REPO>',    $("#repo").val())
+
+            const cleanName=$("#name").val().replace(/[^\w\s]/gi, "").replace(" ","_")
+            var file = new File([selectedTemplateText], "template_"+cleanName+".yaml", {
+                type: "text/plain",
+            });
+
+            const link = document.createElement('a')
+            const url = URL.createObjectURL(file)
+
+            link.href = url
+            link.download = file.name
+            document.body.appendChild(link)
+            link.click()
+
+            document.body.removeChild(link)
+            window.URL.revokeObjectURL(url)
+        }
+
+        
+
+
     </script>
 
     <link rel="preload" href="/style/index.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -40,8 +153,8 @@
         .h2,
         .h3,
         .h4 {
-            font-family: 'Titillium Web;
- line-height: 1.5em;
+            font-family: 'Titillium Web';
+            line-height: 1.5em;
         }
 
         a,
@@ -147,7 +260,7 @@
                     <b>Heat Generator Service</b>
                 </a>
             </span>
-            <button class="fancy-toggler navbar-toggler" type="button" data-toggle="collapse"
+            <!-- <button class="fancy-toggler navbar-toggler" type="button" data-toggle="collapse"
                 data-target="#navbarNav-collapsibleNavbar"
                 style="cursor: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAAXNSR0IArs4c6QAAANpJREFUKFOF0DErhgEUxfHfYXiRQbGRWBRGH8JiMllltMhgs8jgGxBfQPkEFoOyGCyUspneUkgGpFw9et56N3e5p3v/3c490VZVrWIXx0kOe/NeTx/4hj3sYyzJVz/cD34kGa6qVywk6f4HvmAETzjHSZLrVNUMNrCTpFNVB7jDItYbG1huwHfcYynJYFV18JPku6qGcIbbBvzEHLaSbFfVOAbwjEaf4qIBj7CSZKoxX1WT7cVuq6+w+fd1VT3gJslaVTXXJPlpd01Moz1wAo+4bHsvmWnMJ5n9BcF2YYxpXBFiAAAAAElFTkSuQmCC&quot;) 0 0, auto;">
                 <span class="navbar-toggler-icon"></span>
@@ -160,36 +273,50 @@
                         </a>
                     </li>
 
-
-
-                    <!-- %insertPopNavItem% -->
                 </ul>
-            </div>
+            </div> -->
         </nav>
     </div>
-    <form class="inputForm">
-        <h4>Stack Parameters:</h4>
-        <div class="fieldset">
-            <label class="fieldLabel">Name (name)</label>
-            <input type="text" id="name" />
+    <main>
+        <div class="tempSection">
+            <div class="tempSectionLabel">
+                <h4>Select Template:</h4>
+            </div>
+            <div class="tempSectionSelect"><select id="templateSelect" class="templateSelect"></select></div>
+
+
         </div>
-        <div class="fieldset">
-            <label class="fieldLabel">GitHub Repo to clone (repo)</label>
-            <input type="text" id="repo" />
+        <div class="paraSection">
+            <form class="inputForm">
+                <h4>Stack Parameters:</h4>
+                <div class="fieldset">
+                    <label class="fieldLabel"><span>Stack name</span></label>
+                    <input type="text" class="inputs" id="name" />
+                </div>
+                <div class="fieldset">
+                    <label class="fieldLabel"><span>GitHub repo to clone</span></label>
+                    <input type="text" class="inputs" id="repo" />
+                </div>
+                <div class="fieldset">
+                    <label class="fieldLabel"><span>Size of volume</span></label>
+                    <input type="number" class="inputs" id="volume-size" value="50" min="1" max="100">
+                </div>
+                <div class="fieldset">
+                    <label class="fieldLabel"><span>Image name</span></label>
+                    <select name="image-name" id="image-name" class="inputs">
+                        <option value="">Please choose an image</option>
+                    </select>
+                </div>
+                <div class="fieldset">
+                    <label class="fieldLabel"><span>Flavor</span> </label>
+                    <select name="flavor" id="flavor" class="inputs">
+                        <option value="">Please choose a flavor</option>
+                    </select>
+                </div>
+
+                <input id="download" type="button" value="Download" onclick="downloadTemplate();" />
+            </form>
+
         </div>
-        <div class="fieldset">
-            <label class="fieldLabel">Size of volume (volume-size)</label>
-            <input type="number" id="volume-size" value="50">
-        </div>
-        <div class="fieldset">
-            <label class="fieldLabel">Image Name (image-name)</label>
-            <select name="image-name" id="image-name">
-                <option value="">Please choose an image</option>
-            </select>
-        </div>
-        <div class="fieldset">
-            <label class="fieldLabel">Instance Name (instance-name)</label>
-            <input type="text" id="instance-name" />
-        </div>
-    </form>
+    </main>
 </body>

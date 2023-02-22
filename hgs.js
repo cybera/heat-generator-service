@@ -6,11 +6,14 @@ const express = require("express");
 const http = require('http');
 // const https = require('https');
 
+const fs = require('fs');
+
 const app = express();  
 
 const router = express.Router();
 const viewPath = __dirname + '/views/';
 const staticPath = __dirname + '/static/';
+const templatePath = __dirname  + '/templates/'
 
 //Enable static assets in the './static' folder
 app.use(express.static('static'));
@@ -24,8 +27,29 @@ router.get("/",function(req,res){
     res.render("index", {});
 });
 
+var currentTemplatesArr = [];
+function getCurrentTemplates(){
+     fs.readdir(templatePath, function(err, files){ 
+        if (err){
+            console.log(err);
+            res.end(JSON.stringify([]))
+        }else{
+            let templates=[];
+            files.forEach(function(mFile){
+                var tempFileContents = fs.readFileSync(templatePath + mFile, {encoding:'utf8'});
+                var tempFileObj = {"template":mFile, "templateContents":tempFileContents}
+                templates.push(tempFileObj)
+            })
+            currentTemplatesArr = templates
+        }
 
+    });
+}
+getCurrentTemplates();
 
+router.get("/getTemplates",function(req,res){
+    res.end(JSON.stringify(currentTemplatesArr))
+});
 
 app.use("/",router);
 

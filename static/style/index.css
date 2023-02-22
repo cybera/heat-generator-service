@@ -152,20 +152,46 @@ h4.name{
     margin-right: 5px;
 }
 
-.fieldset{
-    margin-left: 30px;
-    margin-right: 30px;
+main {
+    padding-top: 30px;
 }
 
-.inputForm{
-    margin-top: 75px;
-    margin-left: 30px;
-    margin-right: 30px;
+.tempSection, .paraSection {
+    padding-top: 30px;
+    padding-bottom: 30px;
+    padding-left: 30px;
+    padding-right: 30px;
+
+}
+.paraSection {
+    max-width: 750px;
+}
+
+
+/* .inputForm{
+} */
+
+.fieldset {
+    display: flex;
+    margin-bottom: 8px;
+    transition: all 0.4s ease;
+}
+.fieldset input, .fieldset select{
+    transition: all 0.4s ease;
+    transform: translateX(0px) translateY(0px);
 }
 
 .fieldLabel{
     width: 320px;
     text-align: right;
+    transition: all 0.4s ease;
+    padding-right: 7px;
+    min-width: 140px;
+}
+.fieldLabel span{
+    margin-right: 0%;
+    white-space: nowrap;
+    transition: all 0.4s ease;
 }
 
 #volume-size{
@@ -174,4 +200,54 @@ h4.name{
 
 #repo{
     width: 300px;
+}
+
+/* .tempSection{
+    margin-left: 30px;
+} */
+.tempSection {
+    display: flex;
+}
+.tempSectionLabel {
+    width: 320px;
+    white-space: nowrap;
+}
+input#download {
+    float: right;
+}
+
+.tempSectionSelect {
+    padding-top: 4px;
+    padding-left: 3px;
+}
+
+
+@media (max-width: 750px) {
+
+    .fieldLabel{
+        width: 140px;
+
+    }
+
+
+}
+@media (max-width: 520px) {
+
+    .fieldLabel{
+        width: 140px;
+
+    }
+    .fieldLabel span{
+        margin-right: 100%;
+    }
+
+    .fieldset {
+        margin-bottom: 40px;
+    }
+
+    .fieldset  input, .fieldset select{
+        transform: translateX(-142px) translateY(25px);
+    }
+
+
 }
