@@ -54,10 +54,19 @@
                     var key = Object.keys(temp)
                     var val = Object.values(temp)
 
-                    $('#image-name')
-                        .append($("<option></option>")
-                            .attr("value", key)
-                            .text(val));
+                    if(val == "Ubuntu 20.04"){
+                        $('#image-name')
+                            .append($("<option></option>")
+                                .attr("value", key)
+                                .attr("selected", true)
+                                .text(val));
+                    }else{
+                        $('#image-name')
+                            .append($("<option></option>")
+                                .attr("value", key)
+                                .text(val));
+                    }
+                    
                 }
 
             }
@@ -65,13 +74,20 @@
 
             function getFlavors() {
                 for (const temp of flavors) {
-                    // var key = Object.keys(temp)
                     var val = Object.values(temp)
 
-                    $('#flavor')
-                        .append($("<option></option>")
-                            .attr("value", val)
-                            .text(val));
+                    if(val == "m1.small"){
+                        $('#flavor')
+                            .append($("<option></option>")
+                                .attr("value", val)
+                                .attr("selected",true)
+                                .text(val));
+                    }else{
+                        $('#flavor')
+                            .append($("<option></option>")
+                                .attr("value", val)
+                                .text(val));
+                    }
                 }
 
             }
@@ -108,8 +124,9 @@
             selectedTemplateText = selectedTemplateText.replaceAll('<IMAGE>',   $("#image-name").val())
             selectedTemplateText = selectedTemplateText.replaceAll('<REPO>',    $("#repo").val())
 
-            const cleanName=$("#name").val().replace(/[^\w\s]/gi, "").replace(" ","_")
-            var file = new File([selectedTemplateText], "template_"+cleanName+".yaml", {
+            // const cleanName=$("#name").val().replace(/[^\w\s]/gi, "").replace(" ","_")
+            // var file = new File([selectedTemplateText], "template_"+cleanName+".yaml", {
+            var file = new File([selectedTemplateText], "stack.yaml", {
                 type: "text/plain",
             });
 
@@ -129,120 +146,12 @@
 
 
     </script>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web" rel="stylesheet">
 
     <link rel="preload" href="/style/index.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript>
         <link rel="stylesheet" href="/style/index.css">
     </noscript>
-
-
-    <style>
-        body {
-            font-family: "Titillium Web", sans-serif;
-            font-weight: 300;
-            line-height: 1.5em;
-        }
-
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6,
-        .h1,
-        .h2,
-        .h3,
-        .h4 {
-            font-family: 'Titillium Web';
-            line-height: 1.5em;
-        }
-
-        a,
-        abbr,
-        acronym,
-        address,
-        applet,
-        article,
-        aside,
-        audio,
-        b,
-        big,
-        blockquote,
-        body,
-        canvas,
-        caption,
-        center,
-        cite,
-        code,
-        dd,
-        del,
-        details,
-        dfn,
-        div,
-        dl,
-        dt,
-        em,
-        embed,
-        fieldset,
-        figcaption,
-        figure,
-        footer,
-        form,
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6,
-        header,
-        hgroup,
-        html,
-        i,
-        iframe,
-        img,
-        ins,
-        kbd,
-        label,
-        legend,
-        li,
-        main,
-        mark,
-        menu,
-        nav,
-        object,
-        ol,
-        output,
-        p,
-        pre,
-        q,
-        ruby,
-        s,
-        samp,
-        section,
-        small,
-        span,
-        strike,
-        strong,
-        sub,
-        summary,
-        sup,
-        table,
-        tbody,
-        td,
-        tfoot,
-        th,
-        thead,
-        time,
-        tr,
-        tt,
-        u,
-        ul,
-        var,
-        video {
-            font-family: 'Titillium Web';
-        }
-    </style>
-    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web" rel="stylesheet">
 
 
 </head>
@@ -289,10 +198,10 @@
         <div class="paraSection">
             <form class="inputForm">
                 <h4>Stack Parameters:</h4>
-                <div class="fieldset">
+                <!-- <div class="fieldset">
                     <label class="fieldLabel"><span>Stack name</span></label>
                     <input type="text" class="inputs" id="name" />
-                </div>
+                </div> -->
                 <div class="fieldset">
                     <label class="fieldLabel"><span>GitHub repo to clone</span></label>
                     <input type="text" class="inputs" id="repo" />
@@ -304,13 +213,13 @@
                 <div class="fieldset">
                     <label class="fieldLabel"><span>Image name</span></label>
                     <select name="image-name" id="image-name" class="inputs">
-                        <option value="">Please choose an image</option>
+                        <!-- <option value="">Please choose an image</option> -->
                     </select>
                 </div>
                 <div class="fieldset">
                     <label class="fieldLabel"><span>Flavor</span> </label>
                     <select name="flavor" id="flavor" class="inputs">
-                        <option value="">Please choose a flavor</option>
+                        <!-- <option value="">Please choose a flavor</option> -->
                     </select>
                 </div>
 
