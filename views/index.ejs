@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-
+    <link rel="icon" type="image/png" href="cropped-Icon_white-bkgd-02.png">
     <meta id="myViewport" name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Heat Generator Service</title>
@@ -94,13 +94,15 @@
             getFlavors();
 
             function setDownloadVisable(){
-                if($("#volume-size").val() == "" ||
-                    $("#flavor").val() == "" ||
-                    $("#image-name").val() == "" ||
-                    $("#repo").val() == ""){
-                        $("#download").hide()
+                if($("#volume-size").val().trim() == "" ||
+                    $("#flavor").val().trim() == "" ||
+                    $("#image-name").val().trim() == "" ||
+                    $("#repo").val().trim() == ""){
+                        $("#download").css({"transform":"scale(0.8)", "cursor": "not-allowed"})
+                        $("#download").prop('disabled', true)
                     }else{
-                        $("#download").show()
+                        $("#download").css({"transform":"scale(1.0)", "cursor": "auto"})
+                        $("#download").prop('disabled', false)
                     }
             }
             $('.inputs').change(function() 
@@ -111,7 +113,8 @@
             {
                 setDownloadVisable()
             });
-            $("#download").hide()
+            $("#download").prop('disabled', true)
+            $("#download").css({"transition": "all 0.3s cubic-bezier(.67,-0.1,.9,1.65)", "cursor": "not-allowed"})
 
         })
 
@@ -207,7 +210,7 @@
                     <input type="text" class="inputs" id="repo" />
                 </div>
                 <div class="fieldset">
-                    <label class="fieldLabel"><span>Size of volume</span></label>
+                    <label class="fieldLabel"><span>Size of volume (GB)</span></label>
                     <input type="number" class="inputs" id="volume-size" value="50" min="1" max="100">
                 </div>
                 <div class="fieldset">
@@ -223,7 +226,7 @@
                     </select>
                 </div>
 
-                <input id="download" type="button" value="Download" onclick="downloadTemplate();" />
+                <input id="download" disabled type="button" value="Download" onclick="downloadTemplate();" />
             </form>
 
         </div>

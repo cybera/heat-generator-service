@@ -259,6 +259,7 @@ h4.name{
 
 main {
     padding-top: 30px;
+    padding-bottom: 30px;
 }
 
 .tempSection, .paraSection {
@@ -321,16 +322,24 @@ input#download {
     float: right;
 }
 
+.inputForm h4{
+    white-space: nowrap;
+}
+
 .tempSectionSelect {
     padding-top: 4px;
     padding-left: 3px;
+}
+
+#download{
+    transform:scale(0.8);
 }
 
 
 @media (max-width: 750px) {
 
     .fieldLabel{
-        width: 140px;
+        width: 155px;
 
     }
 
