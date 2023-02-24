@@ -7,7 +7,7 @@ clone project
 ```
 git pull https://github.com/cybera/heat-generator-service master
 ```
-Install Node then install dependancies
+Install Node then install dependencies
 ```
 cd /project-path/
 sudo npm install  
