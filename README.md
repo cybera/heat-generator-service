@@ -18,13 +18,13 @@ sudo npm install -g pm2
 pm2 start -n "Heat Generator Service" hgs.js
 pm2 startup
 ```
-Then run the command as instructed. Eg:
+Then run the startup command as instructed. This will create a systemd service and set up start on boot. Eg:
 ```
 sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u ubuntu --hp /home/ubuntu
 pm2 save
 ```
 
-To Run manually if not running:
+To run manually if not running:
 ```
 cd /project-path/
 pm2 start -n "Heat Generator Service" hgs.js
