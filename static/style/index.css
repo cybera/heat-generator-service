@@ -260,6 +260,12 @@ h4.name{
 main {
     padding-top: 30px;
     padding-bottom: 30px;
+    /* display: flex;
+    align-items: center;
+    flex-direction: column; */
+    width: 684px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .tempSection, .paraSection {
@@ -342,6 +348,10 @@ input#download {
         width: 155px;
 
     }
+    main {
+        width: 520px;
+    }
+    
 
 
 }
@@ -361,6 +371,9 @@ input#download {
 
     .fieldset  input, .fieldset select{
         transform: translateX(-142px) translateY(25px);
+    }
+    main {
+        width: 400px;
     }
 
 

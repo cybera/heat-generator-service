@@ -30,6 +30,13 @@
         flavors.push({ "dc4362ca-12ff-4224-91fe-f3542e05718f": "m1.large" })
         flavors.push({ "b8218927-f9e6-43c0-abd2-d8f9fc322a0e": "m1.xlarge" })
 
+        var pyVers = [];
+        pyVers.push({ "3.7": "3.7" })
+        pyVers.push({ "3.8": "3.8" })
+        pyVers.push({ "3.9": "3.9" })
+        pyVers.push({ "3.10": "3.10" })
+        
+
         $(document).ready(function () {
 
             function getTemplates() {
@@ -93,6 +100,24 @@
             }
             getFlavors();
 
+            
+            function getPyVer() {
+                for (const temp of pyVers) {
+                    var val = Object.values(temp)
+
+                    $('#python-version')
+                        .append($("<option></option>")
+                            .attr("value", val)
+                            .text(val));
+                    
+                    if(val == "3.8"){
+                        $("#python-version option:last"). attr("selected", true);
+                    }
+                }
+
+            }
+            getPyVer();
+
             function setDownloadVisable(){
                 if($("#volume-size").val().trim() == "" ||
                     $("#flavor").val().trim() == "" ||
@@ -126,6 +151,7 @@
             selectedTemplateText = selectedTemplateText.replaceAll('<FLAVOR>',  $("#flavor").val())
             selectedTemplateText = selectedTemplateText.replaceAll('<IMAGE>',   $("#image-name").val())
             selectedTemplateText = selectedTemplateText.replaceAll('<REPO>',    $("#repo").val())
+            selectedTemplateText = selectedTemplateText.replaceAll('<python-version>',    $("#python-version").val())
 
             // const cleanName=$("#name").val().replace(/[^\w\s]/gi, "").replace(" ","_")
             // var file = new File([selectedTemplateText], "template_"+cleanName+".yaml", {
@@ -216,13 +242,16 @@
                 <div class="fieldset">
                     <label class="fieldLabel"><span>Image name</span></label>
                     <select name="image-name" id="image-name" class="inputs">
-                        <!-- <option value="">Please choose an image</option> -->
                     </select>
                 </div>
                 <div class="fieldset">
                     <label class="fieldLabel"><span>Flavor</span> </label>
                     <select name="flavor" id="flavor" class="inputs">
-                        <!-- <option value="">Please choose a flavor</option> -->
+                    </select>
+                </div>
+                <div class="fieldset">
+                    <label class="fieldLabel"><span>Python version</span> </label>
+                    <select name="python-version" id="python-version" class="inputs">
                     </select>
                 </div>
 
