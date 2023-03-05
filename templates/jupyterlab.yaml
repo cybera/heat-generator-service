@@ -73,14 +73,17 @@ resources:
         - network: default
       user_data: |
        #!/bin/bash
+       me=$(whoami)
+       echo "I am $me" #root appently
+       set -x #debug
+       
        wall "Completing Install"
-
-
-       sudo touch /home/ubuntu/still_installing
+       touch /root/still_installing
        if [[ -f /usr/local/bin/enableAutoUpdate ]]; then
         /usr/local/bin/enableAutoUpdate
        fi
        mkdir /data
+
        wall "Prepping and mounting volume"
        vol="/dev/sdc"
        ip6=$(ip -6 addr show ens3 | awk '/2605/ { print $2 }' | awk 'BEGIN { FS="/"; } { print $1 }')
@@ -91,53 +94,48 @@ resources:
          if [[ $fs != "ext4" ]]; then
            mkfs -t ext4 $vol
          fi
-         sudo mount $vol /data
+         mount $vol /data
          dev_path=$(readlink -f $vol)
          uuid=$(lsblk -no uuid $dev_path)
-         echo "UUID=${uuid} /data ext4 defaults 0 1 " | sudo tee --append  /etc/fstab
+         echo "UUID=${uuid} /data ext4 defaults 0 1 " | tee --append  /etc/fstab
        fi
+
        wall "Installing Software"
-
        wget https://repo.anaconda.com/archive/Anaconda3-2022.10-Linux-x86_64.sh -O ~/anaconda.sh
-       bash ~/anaconda.sh -b -p $HOME/anaconda
-       eval "$(/home/ubuntu/anaconda/bin/conda shell.bash hook)"
-       conda init
-       #conda config --set auto_activate_base false
-
-       echo y | conda create --name notebooks python=3.8
+       bash ~/anaconda.sh -b -p /root/anaconda
+       eval "$(/root/anaconda/bin/conda shell.bash hook)"
+       source ~/anaconda/etc/profile.d/conda.sh
+       export PATH=~/anaconda/bin:$PATH >> ~/.bashrc
+       source ~/.bashrc
+       conda init bash
+       echo y | /root/anaconda/bin/conda create --name notebooks python=3.8
        conda activate notebooks
-
+       echo "current env = $CONDA_DEFAULT_ENV"
        mkdir /data/notebooks
-       #apt-get -qq update
-       # apt-get -qq install -y software-properties-common python3.8 python3-pip
-
-       echo y | conda install pip
-
-
-       #pip3 install jupyterlab
-
+       #echo y | conda install pip
        echo y | conda install jupyterlab
-
-       # pip3 install markupsafe==2.0.1
-
        repo="https://github.com/cybera/ookla-statcan-analysis.git"
-       cd /home/ubuntu
+       cd /root
+
        wall "Installing requirements.txt from your repo"
        git clone ${repo}
        cd "$(basename "${repo}" .git)"
-       pip3 install -q -r ./python_dashboarding/docker/jupyterlab/requirements.txt
+       echo y | conda install --file requirements.txt
        cd ..
+
        wall "Setting up JupyterLab"
-       #hashed=$(sudo python3 -c "from notebook.auth import passwd; import random; import string; output = ''.join(random.choice(string.ascii_letters) for i in range(24)); f = open(\"jupyterpass.txt\", \"a\"); f.write(str(output + \"\n\")); f.close(); print(passwd(str(output)))")
-       hashed=$(date +%s | sha256sum | base64 | head -c 24)
-       sudo rm -f /etc/systemd/system/jupyter.service
-       sudo tee -a /etc/systemd/system/jupyter.service <<EOF
+       jupyter notebook --generate-config
+       hashed=$(python3 -c "from notebook.auth import passwd; import random; import string; output = ''.join(random.choice(string.ascii_letters) for i in range(24)); f = open(\"jupyterpass.txt\", \"a\"); f.write(str(output + \"\n\")); f.close(); print(passwd(str(output)))")
+       # hashed=$(date +%s | sha256sum | base64 | head -c 24)
+       #  echo ${hashed} > /root/jupyterpass.txt
+       rm -f /etc/systemd/system/jupyter.service
+       tee -a /etc/systemd/system/jupyter.service <<EOF
        [Unit]
        Description=Jupyter Notebook
        [Service]
        Type=simple
        PIDFile=/run/jupyter.pid
-       ExecStart=/usr/local/bin/jupyter-lab --ip='*' --notebook-dir=/data/notebooks --allow-root --no-browser --NotebookApp.password=${hashed}
+       ExecStart=/root/anaconda/envs/notebooks/bin/jupyter lab --ip='*' --notebook-dir=/data/notebooks --allow-root --no-browser --NotebookApp.password=${hashed}
        User=root
        Group=root
        Restart=always
@@ -148,10 +146,10 @@ resources:
        EOF
 
        wall "Starting Services"
-       sudo systemctl daemon-reload
-       sudo systemctl enable jupyter
-       sudo systemctl start jupyter
-       mv /home/ubuntu/still_installing /home/ubuntu/install_complete
+       systemctl daemon-reload
+       systemctl enable jupyter
+       systemctl start jupyter
+       mv /root/still_installing /root/install_complete
        ip4=$(hostname -I | cut -d' ' -f1)
        wall "Install Complete! You should now be able to go to http://${ip4}:8888/lab and use the password in jupyterpass.txt to log in"
 
