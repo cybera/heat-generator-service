@@ -10,6 +10,9 @@ git pull https://github.com/cybera/heat-generator-service master
 Install Node then install dependencies
 ```
 cd /project-path/
+sudo apt update
+sudo apt install nodejs
+sudo apt install npm
 sudo npm install  
 ```
 Then install laucher (pm2)

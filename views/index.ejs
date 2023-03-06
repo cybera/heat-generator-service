@@ -153,8 +153,6 @@
             selectedTemplateText = selectedTemplateText.replaceAll('<REPO>',    $("#repo").val())
             selectedTemplateText = selectedTemplateText.replaceAll('<python-version>',    $("#python-version").val())
 
-            // const cleanName=$("#name").val().replace(/[^\w\s]/gi, "").replace(" ","_")
-            // var file = new File([selectedTemplateText], "template_"+cleanName+".yaml", {
             var file = new File([selectedTemplateText], "stack.yaml", {
                 type: "text/plain",
             });

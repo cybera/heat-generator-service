@@ -108,13 +108,14 @@ resources:
        export PATH=~/anaconda/bin:$PATH >> ~/.bashrc
        source ~/.bashrc
        conda init bash
-       echo y | /root/anaconda/bin/conda create --name notebooks python=3.8
+       echo y | /root/anaconda/bin/conda create --name notebooks python=<python-version>
        conda activate notebooks
        echo "current env = $CONDA_DEFAULT_ENV"
        mkdir /data/notebooks
        #echo y | conda install pip
        echo y | conda install jupyterlab
-       repo="https://github.com/cybera/ookla-statcan-analysis.git"
+       repo="<REPO>"
+       #  repo="https://github.com/cybera/ookla-statcan-analysis.git"
        cd /root
 
        wall "Installing requirements.txt from your repo"
