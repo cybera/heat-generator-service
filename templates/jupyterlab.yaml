@@ -119,7 +119,7 @@ resources:
          mkdir /root/tmp
          mv /root/$repoName/data/* /root/tmp
          mount $vol /root/$repoName/data
-         mv /root/tmp /root/$repoName/data
+         mv /root/tmp/* /root/$repoName/data
          dev_path=$(readlink -f $vol)
          uuid=$(lsblk -no uuid $dev_path)
          echo "UUID=${uuid} /data ext4 defaults 0 1 " | tee --append  /etc/fstab
