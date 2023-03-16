@@ -1,0 +1,199 @@
+description: Template to install JupyterLab
+# ocata version, 2023-02-14
+# pike version, 2023-02-14
+heat_template_version: 2018-03-02
+
+# input parameters that have to be provided when instantiating template
+# optional and can be omitted when no input is required
+# customize each deployment (e.g. setting custom user names or passwords)
+# or binding to environment-specifics like certain images
+# https://docs.openstack.org/heat/pike/template_guide/hot_spec.html#parameters-section
+
+resources:
+  data_volume:
+    type: OS::Cinder::Volume
+    properties:
+      name: "data"
+      size: <SIZE>
+      volume_type: "encrypted"
+
+  my_key:
+    type: OS::Nova::KeyPair
+    properties:
+      save_private_key: true
+      name: jupyter_key
+
+  security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: Security Group for Jupyter Notebook
+      name: jupyter_security_group
+      rules:
+        - direction: ingress
+          ethertype: IPv4
+          port_range_min: 22
+          port_range_max: 22
+          protocol: tcp
+          remote_ip_prefix: 0.0.0.0/0
+        - direction: ingress
+          ethertype: IPv6
+          port_range_min: 22
+          port_range_max: 22
+          protocol: tcp
+          remote_ip_prefix: ::/0
+        - direction: ingress
+          ethertype: IPv4
+          port_range_min: 8888
+          port_range_max: 8888
+          protocol: tcp
+          remote_ip_prefix: 0.0.0.0/0
+        - direction: ingress
+          ethertype: IPv6
+          port_range_min: 8888
+          port_range_max: 8888
+          protocol: tcp
+          remote_ip_prefix: ::/0
+        - direction: ingress
+          ethertype: IPv4
+          protocol: icmp
+          remote_ip_prefix: 0.0.0.0/0
+        - direction: ingress
+          ethertype: IPv6
+          protocol: icmp
+          remote_ip_prefix: ::/0
+  instance:
+    type: OS::Nova::Server
+    properties:
+      flavor: <FLAVOR>
+      key_name: { get_resource: my_key }
+      image: <IMAGE>
+      security_groups:
+        - { get_resource: security_group }
+      networks:
+        - network: default
+      user_data: |
+       #!/bin/bash
+       exec 3>&1 4>&2
+       trap 'exec 2>&4 1>&3' 0 1 2 3
+       exec 1>/root/heat_stack_log.out 2>&1
+       cd /root
+       me=$(whoami)
+       echo "I am $me" #root appently
+       set -x #debug
+       
+       wall "Completing Install"
+       touch /root/still_installing
+       if [[ -f /usr/local/bin/enableAutoUpdate ]]; then
+        /usr/local/bin/enableAutoUpdate
+       fi
+
+       wall "Installing Software"
+       wget https://repo.anaconda.com/archive/Anaconda3-2022.10-Linux-x86_64.sh -O ~/anaconda.sh
+       bash ~/anaconda.sh -b -p /root/anaconda
+       eval "$(/root/anaconda/bin/conda shell.bash hook)"
+       source ~/anaconda/etc/profile.d/conda.sh
+       export PATH=~/anaconda/bin:$PATH >> ~/.bashrc
+       source ~/.bashrc
+       conda init bash
+       #echo y | /root/anaconda/bin/conda create --name notebooks python=<python-version>
+
+       repo="<REPO>"
+       wall "Cloning repo ${repo}"
+       #  repo="https://github.com/cybera/ookla-statcan-analysis.git"
+       git clone ${repo}
+       repoName=$(basename "${repo}" .git)
+       cd $repoName
+       envName=$(grep 'name:' environment.yml | cut -c 7-)
+
+       wall "Prepping and mounting volume"
+       vol="/dev/sdc"
+       ip6=$(ip -6 addr show ens3 | awk '/2605/ { print $2 }' | awk 'BEGIN { FS="/"; } { print $1 }')
+       dns_name=$(dig +short -x $ip6 @ns-yyc.cloud.cybera.ca)
+       dns_name=${dns_name::-1}
+       if [[ -e "${vol}" ]]; then
+         fs=$(blkid -o value -s TYPE $vol)
+         if [[ $fs != "ext4" ]]; then
+           mkfs -t ext4 $vol
+         fi
+         mkdir /root/tmp
+         mv /root/$repoName/data/* /root/tmp
+         mount $vol /root/$repoName/data
+         mv /root/tmp/* /root/$repoName/data
+         dev_path=$(readlink -f $vol)
+         uuid=$(lsblk -no uuid $dev_path)
+         echo "UUID=${uuid} /data ext4 defaults 0 1 " | tee --append  /etc/fstab
+       fi
+
+       wall "Creating conda env $envName"
+       echo y | /root/anaconda/bin/conda env create -f environment.yml
+       conda activate $envName
+       echo "current env = $CONDA_DEFAULT_ENV"
+       mkdir /root/data/$envName
+       echo y | conda install jupyterlab
+
+       wall "Setting up JupyterLab"
+       cd /root
+       jupyter notebook --generate-config
+       hashed=$(python3 -c "from notebook.auth import passwd; import random; import string; output = ''.join(random.choice(string.ascii_letters) for i in range(24)); f = open(\"jupyterpass.txt\", \"a\"); f.write(str(output + \"\n\")); f.close(); print(passwd(str(output)))")
+       rm -f /etc/systemd/system/jupyter.service
+       tee -a /etc/systemd/system/jupyter.service <<EOF
+       [Unit]
+       Description=Jupyter Notebook
+       [Service]
+       Type=simple
+       PIDFile=/run/jupyter.pid
+       ExecStart=/root/anaconda/envs/$envName/bin/jupyter lab --ip='*' --notebook-dir=/root/$repoName/data --allow-root --no-browser --NotebookApp.password=${hashed}
+       User=root
+       Group=root
+       Restart=always
+       RestartSec=10
+
+       [Install]
+       WantedBy=multi-user.target
+       EOF
+
+       wall "Starting Services"
+       systemctl daemon-reload
+       systemctl enable jupyter
+       systemctl start jupyter
+       
+       mv /root/still_installing /root/install_complete
+       ip4=$(hostname -I | cut -d' ' -f1)
+       wall "Install Complete! You should now be able to go to http://<Lab-Instance-IP>:8888/lab and use the password in jupyterpass.txt to log in"
+      
+       cd /root
+       wall "Installing AWS CLI"
+       apt-get -qq install unzip
+       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+       unzip awscliv2.zip
+       ./aws/install
+
+       wall "Finding data init script..."
+       cd /root/$repoName
+       FILE=data_init.sh
+       if [[ -f "$FILE" ]]; then
+        wall "$FILE exists - Data installation may take a long time"
+        chmod +x data_init.sh
+        ./data_init.sh
+       else
+        wall "$FILE not found"
+       fi
+       cd /root
+       wall "Data install Complete! Access lab http://<Lab-Instance-IP>:8888/lab and use the password in /root/jupyterpass.txt to log in"
+
+
+  volume_attachment:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      volume_id: { get_resource: data_volume }
+      instance_uuid: { get_resource: instance }
+
+outputs:
+  instance_detail:
+    description: 
+    value: { get_attr: [instance, show] }
+
+  private_key:
+    description: Private key
+    value: { get_attr: [ my_key, private_key ] }
+
