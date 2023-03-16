@@ -105,7 +105,6 @@ resources:
        cd $repoName
        envName=$(grep 'name:' environment.yml | cut -c 7-)
 
-
        wall "Prepping and mounting volume"
        vol="/dev/sdc"
        ip6=$(ip -6 addr show ens3 | awk '/2605/ { print $2 }' | awk 'BEGIN { FS="/"; } { print $1 }')
@@ -125,8 +124,6 @@ resources:
          echo "UUID=${uuid} /data ext4 defaults 0 1 " | tee --append  /etc/fstab
        fi
 
-
-
        wall "Creating conda env $envName"
        echo y | /root/anaconda/bin/conda env create -f environment.yml
        conda activate $envName
@@ -135,6 +132,7 @@ resources:
        echo y | conda install jupyterlab
 
        wall "Setting up JupyterLab"
+       cd /root
        jupyter notebook --generate-config
        hashed=$(python3 -c "from notebook.auth import passwd; import random; import string; output = ''.join(random.choice(string.ascii_letters) for i in range(24)); f = open(\"jupyterpass.txt\", \"a\"); f.write(str(output + \"\n\")); f.close(); print(passwd(str(output)))")
        rm -f /etc/systemd/system/jupyter.service
