@@ -83,7 +83,7 @@
                 for (const temp of flavors) {
                     var val = Object.values(temp)
 
-                    if(val == "m1.small"){
+                    if(val == "m1.medium"){
                         $('#flavor')
                             .append($("<option></option>")
                                 .attr("value", val)
@@ -130,6 +130,7 @@
                         $("#download").prop('disabled', false)
                     }
             }
+            setDownloadVisable()
             $('.inputs').change(function() 
             {
                 setDownloadVisable()
@@ -138,8 +139,6 @@
             {
                 setDownloadVisable()
             });
-            $("#download").prop('disabled', true)
-            $("#download").css({"transition": "all 0.3s cubic-bezier(.67,-0.1,.9,1.65)", "cursor": "not-allowed"})
 
         })
 
@@ -151,7 +150,7 @@
             selectedTemplateText = selectedTemplateText.replaceAll('<FLAVOR>',  $("#flavor").val())
             selectedTemplateText = selectedTemplateText.replaceAll('<IMAGE>',   $("#image-name").val())
             selectedTemplateText = selectedTemplateText.replaceAll('<REPO>',    $("#repo").val())
-            selectedTemplateText = selectedTemplateText.replaceAll('<python-version>',    $("#python-version").val())
+            // selectedTemplateText = selectedTemplateText.replaceAll('<python-version>',    $("#python-version").val())
 
             var file = new File([selectedTemplateText], "stack.yaml", {
                 type: "text/plain",
@@ -231,11 +230,11 @@
                 </div> -->
                 <div class="fieldset">
                     <label class="fieldLabel"><span>GitHub repo to clone</span></label>
-                    <input type="text" class="inputs" id="repo" />
+                    <input type="text" class="inputs" id="repo" value="https://github.com/cybera/ookla-statcan-analysis.git" />
                 </div>
                 <div class="fieldset">
                     <label class="fieldLabel"><span>Size of volume (GB)</span></label>
-                    <input type="number" class="inputs" id="volume-size" value="50" min="1" max="100">
+                    <input type="number" class="inputs" id="volume-size" value="50" min="1" max="250">
                 </div>
                 <div class="fieldset">
                     <label class="fieldLabel"><span>Image name</span></label>
@@ -247,11 +246,11 @@
                     <select name="flavor" id="flavor" class="inputs">
                     </select>
                 </div>
-                <div class="fieldset">
+                <!-- <div class="fieldset">
                     <label class="fieldLabel"><span>Python version</span> </label>
                     <select name="python-version" id="python-version" class="inputs">
                     </select>
-                </div>
+                </div> -->
 
                 <input id="download" disabled type="button" value="Download" onclick="downloadTemplate();" />
             </form>

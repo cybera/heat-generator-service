@@ -9,6 +9,15 @@ heat_template_version: 2018-03-02
 # or binding to environment-specifics like certain images
 # https://docs.openstack.org/heat/pike/template_guide/hot_spec.html#parameters-section
 
+parameters:
+  key_name:
+    type: string
+    label: Key Name
+    description: Name of key-pair to be used for compute instance
+    constraints:
+      - custom_constraint: nova.keypair
+        description: Must name a public key (pair) known to Nova
+
 resources:
   data_volume:
     type: OS::Cinder::Volume
@@ -16,12 +25,6 @@ resources:
       name: "data"
       size: <SIZE>
       volume_type: "encrypted"
-
-  my_key:
-    type: OS::Nova::KeyPair
-    properties:
-      save_private_key: true
-      name: jupyter_key
 
   security_group:
     type: OS::Neutron::SecurityGroup
@@ -65,7 +68,7 @@ resources:
     type: OS::Nova::Server
     properties:
       flavor: <FLAVOR>
-      key_name: { get_resource: my_key }
+      key_name: { get_param: key_name }
       image: <IMAGE>
       security_groups:
         - { get_resource: security_group }
@@ -73,21 +76,36 @@ resources:
         - network: default
       user_data: |
        #!/bin/bash
+       cd /root
+       touch /root/status_starting_provision
+       repo="<REPO>"
+       if [ -z $repo ]; then wall "repo not specified"; mv /root/status_* /root/status_repo_not_specified; exit 1; fi 
+
+       wall "Install Docker"
+       mv /root/status_* /root/status_install_docker
+       snap install docker
+       
+       wall "See /root/heat_stack_log.out"
        exec 3>&1 4>&2
        trap 'exec 2>&4 1>&3' 0 1 2 3
        exec 1>/root/heat_stack_log.out 2>&1
-       cd /root
-       me=$(whoami)
-       echo "I am $me" #root appently
        set -x #debug
        
-       wall "Completing Install"
-       touch /root/still_installing
+       mv /root/status_* /root/status_cloning_repo
+       wall "Cloning repo ${repo}"
+       #  repo="https://github.com/cybera/ookla-statcan-analysis.git"
+       git clone ${repo}
+       repoName=$(basename "${repo}" .git)
+       cd $repoName
+       envName=$(grep 'name:' environment.yml | cut -c 7-)
+       if [ -z $envName ]; then wall "environment.yml not found in repo or name parameter not found in environment.yml"; mv /root/status_* /root/status_env_name_not_found; exit 1; fi
+       
        if [[ -f /usr/local/bin/enableAutoUpdate ]]; then
         /usr/local/bin/enableAutoUpdate
        fi
 
        wall "Installing Software"
+       mv /root/status_* /root/status_installing_software
        wget https://repo.anaconda.com/archive/Anaconda3-2022.10-Linux-x86_64.sh -O ~/anaconda.sh
        bash ~/anaconda.sh -b -p /root/anaconda
        eval "$(/root/anaconda/bin/conda shell.bash hook)"
@@ -95,16 +113,8 @@ resources:
        export PATH=~/anaconda/bin:$PATH >> ~/.bashrc
        source ~/.bashrc
        conda init bash
-       #echo y | /root/anaconda/bin/conda create --name notebooks python=<python-version>
 
-       repo="<REPO>"
-       wall "Cloning repo ${repo}"
-       #  repo="https://github.com/cybera/ookla-statcan-analysis.git"
-       git clone ${repo}
-       repoName=$(basename "${repo}" .git)
-       cd $repoName
-       envName=$(grep 'name:' environment.yml | cut -c 7-)
-
+       mv /root/status_* /root/status_mounting_vol
        wall "Prepping and mounting volume"
        vol="/dev/sdc"
        ip6=$(ip -6 addr show ens3 | awk '/2605/ { print $2 }' | awk 'BEGIN { FS="/"; } { print $1 }')
@@ -125,6 +135,7 @@ resources:
        fi
 
        wall "Creating conda env $envName"
+       mv /root/status_* /root/status_creating_conda_env
        echo y | /root/anaconda/bin/conda env create -f environment.yml
        conda activate $envName
        echo "current env = $CONDA_DEFAULT_ENV"
@@ -132,6 +143,7 @@ resources:
        echo y | conda install jupyterlab
 
        wall "Setting up JupyterLab"
+       mv /root/status_* /root/status_seting_up_jupyter
        cd /root
        jupyter notebook --generate-config
        hashed=$(python3 -c "from notebook.auth import passwd; import random; import string; output = ''.join(random.choice(string.ascii_letters) for i in range(24)); f = open(\"jupyterpass.txt\", \"a\"); f.write(str(output + \"\n\")); f.close(); print(passwd(str(output)))")
@@ -153,22 +165,25 @@ resources:
        EOF
 
        wall "Starting Services"
+       mv /root/status_* /root/status_starting_services
        systemctl daemon-reload
        systemctl enable jupyter
        systemctl start jupyter
        
-       mv /root/still_installing /root/install_complete
+       mv /root/status_* /root/status_install_complete
        ip4=$(hostname -I | cut -d' ' -f1)
-       wall "Install Complete! You should now be able to go to http://<Lab-Instance-IP>:8888/lab and use the password in jupyterpass.txt to log in"
+       wall "Install Complete! You should now be able to go to http://[IP_V6_address]:8888/lab ($dns_name) and use the password in jupyterpass.txt to log in"
       
        cd /root
        wall "Installing AWS CLI"
+       mv /root/status_* /root/status_install_aws
        apt-get -qq install unzip
        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
        unzip awscliv2.zip
        ./aws/install
 
        wall "Finding data init script..."
+       mv /root/status_* /root/status_starting_data_init
        cd /root/$repoName
        FILE=data_init.sh
        if [[ -f "$FILE" ]]; then
@@ -179,7 +194,8 @@ resources:
         wall "$FILE not found"
        fi
        cd /root
-       wall "Data install Complete! Access lab http://<Lab-Instance-IP>:8888/lab and use the password in /root/jupyterpass.txt to log in"
+       wall "Data install Complete! Access lab http://[IP_V6_address]:8888/lab ($dns_name) and use the password in /root/jupyterpass.txt to log in"
+       mv /root/status_* /root/status_data_init_complete
 
 
   volume_attachment:
@@ -192,8 +208,4 @@ outputs:
   instance_detail:
     description: 
     value: { get_attr: [instance, show] }
-
-  private_key:
-    description: Private key
-    value: { get_attr: [ my_key, private_key ] }
 
