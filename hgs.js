@@ -22,7 +22,7 @@ app.use(express.static('static'));
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
-router.get("/",function(req,res){
+router.get("/hgs",function(req,res){
     var sess = req.session;
     res.render("index", {});
 });
