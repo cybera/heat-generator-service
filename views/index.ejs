@@ -47,10 +47,20 @@
                     for (const temp of templatesObjArr) {
                         var fileName = temp.template
 
-                        $('#templateSelect')
-                            .append($("<option></option>")
-                                .attr("value", fileName)
-                                .text(fileName.replace(".yaml", "")));
+                        if(fileName.includes("local")){
+                            $('#templateSelect')
+                                .append($("<option></option>")
+                                    .attr("value", fileName)
+                                    .attr("selected", true)
+                                    .text(fileName.replace(".yaml", "")));
+
+                        }else{
+                            $('#templateSelect')
+                                .append($("<option></option>")
+                                    .attr("value", fileName)
+                                    .text(fileName.replace(".yaml", "")));
+                        }
+                        
                     }
                 })
             }
@@ -101,27 +111,28 @@
             getFlavors();
 
             
-            function getPyVer() {
-                for (const temp of pyVers) {
-                    var val = Object.values(temp)
+            // function getPyVer() {
+            //     for (const temp of pyVers) {
+            //         var val = Object.values(temp)
 
-                    $('#python-version')
-                        .append($("<option></option>")
-                            .attr("value", val)
-                            .text(val));
+            //         $('#python-version')
+            //             .append($("<option></option>")
+            //                 .attr("value", val)
+            //                 .text(val));
                     
-                    if(val == "3.8"){
-                        $("#python-version option:last"). attr("selected", true);
-                    }
-                }
+            //         if(val == "3.8"){
+            //             $("#python-version option:last"). attr("selected", true);
+            //         }
+            //     }
 
-            }
-            getPyVer();
+            // }
+            // getPyVer();
 
             function setDownloadVisable(){
                 if($("#volume-size").val().trim() == "" ||
                     $("#flavor").val().trim() == "" ||
                     $("#image-name").val().trim() == "" ||
+                    $("#repo-branch").val().trim() == "" ||
                     $("#repo").val().trim() == ""){
                         $("#download").css({"transform":"scale(0.8)", "cursor": "not-allowed"})
                         $("#download").prop('disabled', true)
@@ -150,6 +161,7 @@
             selectedTemplateText = selectedTemplateText.replaceAll('<FLAVOR>',  $("#flavor").val())
             selectedTemplateText = selectedTemplateText.replaceAll('<IMAGE>',   $("#image-name").val())
             selectedTemplateText = selectedTemplateText.replaceAll('<REPO>',    $("#repo").val())
+            selectedTemplateText = selectedTemplateText.replaceAll('<REPO-BRANCH>',    $("#repo-branch").val())
             // selectedTemplateText = selectedTemplateText.replaceAll('<python-version>',    $("#python-version").val())
 
             var file = new File([selectedTemplateText], "stack.yaml", {
@@ -230,7 +242,10 @@
                 </div> -->
                 <div class="fieldset">
                     <label class="fieldLabel"><span>GitHub repo to clone</span></label>
-                    <input type="text" class="inputs" id="repo" value="https://github.com/cybera/ookla-statcan-analysis.git" />
+                    <input type="text" class="inputs" id="repo" value="https://github.com/cybera/ookla-statcan-analysis.git" />                </div>
+                <div class="fieldset">
+                    <label class="fieldLabel"><span>GitHub repo branch to clone</span></label>
+                    <input type="text" class="inputs" id="repo-branch" value="hgs" /> 
                 </div>
                 <div class="fieldset">
                     <label class="fieldLabel"><span>Size of volume (GB)</span></label>

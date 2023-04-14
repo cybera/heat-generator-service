@@ -79,11 +79,20 @@ resources:
        cd /root
        touch /root/status_starting_provision
        repo="<REPO>"
+       repobranch="<REPO-BRANCH>"
        if [ -z $repo ]; then wall "repo not specified"; mv /root/status_* /root/status_repo_not_specified; exit 1; fi 
 
        wall "Install Docker"
        mv /root/status_* /root/status_install_docker
-       snap install docker
+       # snap install docker
+       sudo apt update
+       apt install -qq -y  ca-certificates curl gnupg lsb-release
+       mkdir -p /etc/apt/keyrings
+       curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+       chmod a+r /etc/apt/keyrings/docker.gpg
+       echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+       apt update
+       apt install -qq -y  docker-ce docker-ce-cli containerd.io
        
        wall "See /root/heat_stack_log.out"
        exec 3>&1 4>&2
@@ -94,7 +103,7 @@ resources:
        mv /root/status_* /root/status_cloning_repo
        wall "Cloning repo ${repo}"
        #  repo="https://github.com/cybera/ookla-statcan-analysis.git"
-       git clone ${repo}
+       git clone -b ${repobranch} ${repo} 
        repoName=$(basename "${repo}" .git)
        cd $repoName
        envName=$(grep 'name:' environment.yml | cut -c 7-)
@@ -131,7 +140,7 @@ resources:
          mv /root/tmp/* /root/$repoName/data
          dev_path=$(readlink -f $vol)
          uuid=$(lsblk -no uuid $dev_path)
-         echo "UUID=${uuid} /data ext4 defaults 0 1 " | tee --append  /etc/fstab
+         echo "UUID=${uuid} /root/$repoName/data ext4 defaults 0 1 " | tee --append  /etc/fstab
        fi
 
        wall "Creating conda env $envName"
