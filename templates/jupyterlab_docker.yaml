@@ -4,7 +4,7 @@ description: Template to install JupyterLab via docker
 # Requires <SIZE>, <FLAVOR>, <IMAGE>, <REPO>, <REPO-BRANCH> tags to be overwriten with valid values
 # See https://github.com/cybera/heat-generator-service
 # SSH key will be required when creating stack in Openstack
-heat_template_version: 2023-04-14
+heat_template_version: queens 
 
 parameters:
   key_name:
