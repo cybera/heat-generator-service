@@ -324,6 +324,9 @@ main {
     width: 320px;
     white-space: nowrap;
 }
+input#repo-branch {
+    width: 100px;
+}
 input#download {
     float: right;
 }

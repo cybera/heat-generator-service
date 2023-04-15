@@ -2,7 +2,7 @@
 Project to create Heat Generator Service web app
 
 
-To Install:
+To Manualy Install:
 clone project
 ```
 git pull https://github.com/cybera/heat-generator-service master
@@ -31,6 +31,10 @@ To run manually if not running:
 ```
 cd /project-path/
 pm2 start -n "Heat Generator Service" hgs.js
+```
+Launch url:
+```
+http://<ip>:8043
 ```
 To list process:
 ```
