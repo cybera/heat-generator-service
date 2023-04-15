@@ -97,6 +97,9 @@ resources:
        apt update
        apt install -qq -y  docker-ce docker-ce-cli containerd.io
        
+       # give ubunto permission to use docker
+       usermod -aG docker "ubuntu" 
+       
        wall "Cloning repo ${repo} ${repobranch}"
        mv /home/ubuntu/status_* /home/ubuntu/status_cloning_repo
        git clone -b ${repobranch} ${repo} 
@@ -135,9 +138,6 @@ resources:
        wall "Docker Compose"
        mv /home/ubuntu/status_* /home/ubuntu/status_docker_compose
        sudo -u ubuntu docker compose up -d
-
-       # give ubunto permission to use docker
-       usermod -aG docker "ubuntu" 
        
        # List all contianers
        docker ps -a

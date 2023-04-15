@@ -42,7 +42,6 @@
             function getTemplates() {
                 $.get('/getTemplates', function (data) {
                     templatesObjArr = JSON.parse(data);
-                    selectedTemplateObj = templatesObjArr[0]
 
                     for (const temp of templatesObjArr) {
                         var fileName = temp.template
@@ -155,14 +154,16 @@
 
         function downloadTemplate() {
 
-            var selectedTemplateText = selectedTemplateObj.templateContents
+            selectedTemplate = $("#templateSelect").find(":selected").val();
+            let selectedTemplateObj = templatesObjArr.find(o => o.template === selectedTemplate);
+
+            let selectedTemplateText = selectedTemplateObj.templateContents
 
             selectedTemplateText = selectedTemplateText.replaceAll('<SIZE>',    $("#volume-size").val())
             selectedTemplateText = selectedTemplateText.replaceAll('<FLAVOR>',  $("#flavor").val())
             selectedTemplateText = selectedTemplateText.replaceAll('<IMAGE>',   $("#image-name").val())
             selectedTemplateText = selectedTemplateText.replaceAll('<REPO>',    $("#repo").val())
             selectedTemplateText = selectedTemplateText.replaceAll('<REPO-BRANCH>',    $("#repo-branch").val())
-            // selectedTemplateText = selectedTemplateText.replaceAll('<python-version>',    $("#python-version").val())
 
             var file = new File([selectedTemplateText], "stack.yaml", {
                 type: "text/plain",
