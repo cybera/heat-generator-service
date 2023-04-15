@@ -1,13 +1,10 @@
-description: Template to install JupyterLab
-# ocata version, 2023-02-14
-# pike version, 2023-02-14
-heat_template_version: 2018-03-02
+description: Template to install JupyterLab via docker
 
-# input parameters that have to be provided when instantiating template
-# optional and can be omitted when no input is required
-# customize each deployment (e.g. setting custom user names or passwords)
-# or binding to environment-specifics like certain images
-# https://docs.openstack.org/heat/pike/template_guide/hot_spec.html#parameters-section
+# Openstack Heat Template for launching Jupyter Lab via Docker
+# Requires <SIZE>, <FLAVOR>, <IMAGE>, <REPO>, <REPO-BRANCH> tags to be overwriten with valid values
+# See https://github.com/cybera/heat-generator-service
+# SSH key will be required when creating stack in Openstack
+heat_template_version: 2023-04-14
 
 parameters:
   key_name:
@@ -99,11 +96,9 @@ resources:
        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
        apt update
        apt install -qq -y  docker-ce docker-ce-cli containerd.io
-       usermod -aG docker "ubuntu"
        
-       mv /home/ubuntu/status_* /home/ubuntu/status_cloning_repo
        wall "Cloning repo ${repo} ${repobranch}"
-       #  repo="https://github.com/cybera/ookla-statcan-analysis.git"
+       mv /home/ubuntu/status_* /home/ubuntu/status_cloning_repo
        git clone -b ${repobranch} ${repo} 
        repoName=$(basename "${repo}" .git)
        cd $repoName
@@ -135,47 +130,44 @@ resources:
          echo "UUID=${uuid} /home/ubuntu/$repoName/data ext4 defaults 0 1 " | tee --append  /etc/fstab
        fi
 
+       chown -R ubuntu:users /home/ubuntu/$repoName
+
        wall "Docker Compose"
        mv /home/ubuntu/status_* /home/ubuntu/status_docker_compose
-       sudo -u ubuntu docker compose up -d 
-       dockerID=$(docker ps -aqf "name=^ookla-statcan-analysis-jupyter-1$")
+       sudo -u ubuntu docker compose up -d
 
-       v6ip=$(ip -6 addr|awk '{print $2}'|grep -P '^(?!fe80)[[:alnum:]]{4}:.*/64'|cut -d '/' -f1)
-       urlLine=$(docker logs $dockerID 2>&1 | grep 127.0.0.1 | head -1)
-       pp=[$v6ip]
-       accessURL=${urlLine//127.0.0.1/$pp}
-       echo $accessURL > /home/ubuntu/jupyterlink.txt
+       # give ubunto permission to use docker
+       usermod -aG docker "ubuntu" 
+       
+       # List all contianers
+       docker ps -a
+       
+       # Command to remove all containers and all images if required
+       # docker rm $(docker ps -a -f status=exited -q); docker rmi $(docker images -a -q)
 
-       # docker ps -a
-       # docker rm $(docker ps -a -f status=exited -q)
-       # docker rmi $(docker images -a -q)
+       # Build a script that will generate url based on IPv6 and token link in docker logs
+       cat <<EOF > /home/ubuntu/jupyterlink.sh
+        #!/bin/bash
+        dockerID=\$(docker ps -aqf "name=^ookla-statcan-analysis-jupyter-1$")
+        v6ip=\$(ip -6 addr|awk '{print \$2}'|grep -P '^(?!fe80)[[:alnum:]]{4}:.*/64'|cut -d '/' -f1)
+        urlLine=\$(docker logs \$dockerID 2>&1 | grep 127.0.0.1 | tail -1)
+        pp=[\$v6ip]
+        accessURL=\${urlLine//127.0.0.1/\$pp}
+        echo \$accessURL
+        echo \$accessURL >> /home/ubuntu/jupyterlink.txt
+       EOF
+       sudo -u ubuntu touch /home/ubuntu/jupyterlink.txt
 
-       wall "Docker container started! You should now be able to go to $accessURL"
+       chmod +x jupyterlink.sh
+       chown ubuntu:users jupyterlink.sh
+       sudo -u ubuntu /home/ubuntu/jupyterlink.sh
 
-       cd /home/ubuntu
-       wall "Installing AWS CLI"
-       mv /home/ubuntu/status_* /home/ubuntu/status_install_aws
-       apt-get -qq install unzip
-       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-       unzip awscliv2.zip
-       ./aws/install
+       chmod +x data_init.sh
 
-       wall "Finding data init script..."
-       mv /home/ubuntu/status_* /home/ubuntu/status_starting_data_init
-       cd /home/ubuntu/$repoName
-       FILE=data_init.sh
-       if [[ -f "$FILE" ]]; then
-        wall "$FILE exists - Data installation may take a long time"
-        chmod +x data_init.sh
-        ./data_init.sh
-       else
-        wall "$FILE not found"
-       fi
-
-       cd /home/ubuntu
-       wall "Data install Complete! Access lab $accessURL"
-       mv /home/ubuntu/status_* /home/ubuntu/status_data_init_complete
-
+       wall "Docker container started! You should now be able to go to access link in /home/ubuntu/jupyterlink.txt"
+       wall "To download and process data cd to /home/ubuntu and run ./data_init.sh"
+       wall "The data download and process can take a long time"
+       mv /home/ubuntu/status_* /home/ubuntu/status_complete
 
   volume_attachment:
     type: OS::Cinder::VolumeAttachment
