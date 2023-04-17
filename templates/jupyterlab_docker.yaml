@@ -96,7 +96,7 @@ resources:
        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
        apt update
        apt install -qq -y  docker-ce docker-ce-cli containerd.io
-       
+
        # give ubunto permission to use docker
        usermod -aG docker "ubuntu" 
        
@@ -146,8 +146,10 @@ resources:
        # docker rm $(docker ps -a -f status=exited -q); docker rmi $(docker images -a -q)
 
        # Build a script that will generate url based on IPv6 and token link in docker logs
+       sudo -u ubuntu touch /home/ubuntu/jupyterlink.sh
        cat <<EOF > /home/ubuntu/jupyterlink.sh
         #!/bin/bash
+        sleep 3
         dockerID=\$(docker ps -aqf "name=^ookla-statcan-analysis-jupyter-1$")
         v6ip=\$(ip -6 addr|awk '{print \$2}'|grep -P '^(?!fe80)[[:alnum:]]{4}:.*/64'|cut -d '/' -f1)
         urlLine=\$(docker logs \$dockerID 2>&1 | grep 127.0.0.1 | tail -1)
@@ -158,16 +160,18 @@ resources:
        EOF
        sudo -u ubuntu touch /home/ubuntu/jupyterlink.txt
 
-       chmod +x jupyterlink.sh
-       chown ubuntu:users jupyterlink.sh
-       sudo -u ubuntu /home/ubuntu/jupyterlink.sh
+       chmod +x /home/ubuntu/jupyterlink.sh
+       chown ubuntu:ubuntu /home/ubuntu/*
 
        chmod +x data_init.sh
 
        wall "Docker container started! You should now be able to go to access link in /home/ubuntu/jupyterlink.txt"
-       wall "To download and process data cd to /home/ubuntu and run ./data_init.sh"
+       wall "To download and process data, cd to /home/ubuntu and run ./data_init.sh"
        wall "The data download and process can take a long time"
        mv /home/ubuntu/status_* /home/ubuntu/status_complete
+
+       /home/ubuntu/jupyterlink.sh &
+
 
   volume_attachment:
     type: OS::Cinder::VolumeAttachment
